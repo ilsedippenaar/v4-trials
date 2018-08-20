@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>V4 Trial Visualization</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='lib/semantic.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <script src="{{ url_for('static', filename='lib/d3.v5.min.js') }}" charset="utf-8"></script>
+        <script src="{{ url_for('static', filename='lib/vue.min.js') }}" charset="utf-8"></script>
+    </head>
+    <body>
+        <div id="controls" class="ui segment">
+            {% raw %}
+            <form id="monkey-name" class="ui form">
+                <div class="inline fields">
+                    <div v-for="name in monkeyNames" class="field">
+                        <div class="ui radio checkbox">
+                            <input type="radio" :value="name" v-model="monkeyName">
+                            <label>{{ name }}</label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="ui hidden section divider"></div>
+            <select id="dates" v-model="date" class="ui dropdown">
+                <option v-for="date in dates" :value="date">
+                    {{ new Date(date).toLocaleDateString('en-US', {weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'}) }}
+                </option>
+            </select>
+            <div class="ui hidden section divider"></div>
+            <select id="idxs" v-model="idx.idx" class="ui dropdown">
+                <option v-for="idx in idxs" :value="idx">{{ idx+1 }}</option>
+            </select>
+            <div class="ui hidden section divider"></div>
+            <div id="prev-next">
+                <button type="button" id="prev-btn" @click="onPrev" class="ui red button">Previous</button>
+                <button type="button" id="next-btn" @click="onNext" class="ui green button">Next</button>
+            </div>
+            {% endraw %}
+        </div>
+        <svg id="plot">
+            <g>
+                <g id="spike-train"/>
+                <g id="lfp-trace"/>
+                <g id="events"/>
+                <g id="axis-spike"/>
+                <g id="axis-lfp"/>
+                <g id="axis-bottom"/>
+            </g>
+        </svg>
+        <script src="{{ url_for('static', filename='app.js') }}" charset="utf-8"></script>
+    </body>
+</html>
