@@ -24,12 +24,12 @@
             <div class="ui hidden section divider"></div>
             <select id="dates" v-model="date" class="ui dropdown">
                 <option v-for="date in dates" :value="date">
-                    {{ new Date(date).toLocaleDateString('en-US', {weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'}) }}
+                    {{ formatDate(date) }}
                 </option>
             </select>
             <div class="ui hidden section divider"></div>
             <select id="idxs" v-model="idx.idx" class="ui dropdown">
-                <option v-for="idx in idxs" :value="idx">{{ idx+1 }}</option>
+                <option v-for="idx in idxs" :value="idx">{{ idx }}</option>
             </select>
             <div class="ui hidden section divider"></div>
             <div id="prev-next">

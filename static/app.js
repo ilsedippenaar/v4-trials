@@ -100,6 +100,13 @@ function buildQuery(name, params) {
             '')
 }
 
+function formatDate(date) {
+    date = new Date(date);
+    return new Date(date.getTime() + date.getTimezoneOffset()*60000)
+                .toLocaleDateString('en-US',
+                                    {weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'});
+}
+
 function getPlotData(monkeyName, date, idx, callback) {
     fetch(buildQuery('/trial', {name: monkeyName, date: date, idx: idx}))
         .then(resp => resp.json())
@@ -120,10 +127,12 @@ let controls = new Vue({
     },
     methods: {
         onPrev: function() {
-            this.idx.idx = Math.max(0, this.idx.idx-1);
+            let idxOfIdx = this.idxs.indexOf(this.idx.idx);
+            this.idx.idx = this.idxs[Math.max(0, idxOfIdx-1)];
         },
         onNext: function() {
-            this.idx.idx = Math.min(this.idxs.length-1, this.idx.idx+1);
+            let idxOfIdx = this.idxs.indexOf(this.idx.idx);
+            this.idx.idx = this.idxs[Math.min(this.idxs.length-1, idxOfIdx+1)];
         }
     },
     watch: {

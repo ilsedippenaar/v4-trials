@@ -1,90 +1,68 @@
-import pathlib
-import json
-import re
-import datetime
-import math
+import functools
 
-from scipy import io
-
-from flask import Flask, request, render_template
+import psycopg2
+from flask import Flask, request, render_template, jsonify
 app = Flask(__name__)
 
-class DataHandler:
-    """Basically a stand-in read-only database thing"""
-    def __init__(self, data_dir):
-        self.data_dir = pathlib.Path(data_dir)
-        self._cache = None
 
-    @staticmethod
-    def _load_raw(file):
-        mat = io.loadmat(file)
-        N = len(mat['num'])
-        lfps = [lfp[0].reshape(-1) for lfp in mat['lfp']]
-        spikes = [s[0].reshape(-1) for s in mat['spikes']]
-        event_names = mat['events'].dtype.names
-        events = {event_name: mat['events'][event_name][0][0].reshape(-1) for event_name in event_names}
-        return [{'lfp': lfps[i],
-               'spikes': spikes[i],
-               'events': {name: events[name][i] for name in event_names if not math.isnan(events[name][i])}} for i in range(N)]
+def uses_db(f):
+    # for functions that want a cursor
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        with psycopg2.connect(dbname='v4_trials', user='postgres') as conn, \
+             conn.cursor() as curr:
+            return f(curr, *args, **kwargs)
+        return None
+    return wrapped
 
-    @staticmethod
-    def _raw_to_json(trial):
-        lfp = [float(x) for x in trial['lfp'].round(2)]
-        spikes = [[float(x) for x in unit.reshape(-1)] for unit in trial['spikes']]
-        events = {k: float(v) for k,v in trial['events'].items()}
-        return json.dumps({'lfp': lfp, 'spikes': spikes, 'events': events})
-
-    def _get_filename(self, monkey_name: str, date: str):
-        dates = self.get_dates(monkey_name)
-        return dates[datetime.date.fromisoformat(date)]
-
-    def _from_cache(self, monkey_name: str, date: str):
-        params = (monkey_name, date)
-        if not self._cache or self._cache[0] != params:
-            self._cache = (params, self._load_raw(self._get_filename(*params)))
-        return self._cache[1]
-
-    def get_names(self):
-        return ["Zorin", "Jaws"]
-
-    def get_dates(self, monkey_name: str):
-        files = sorted(self.data_dir.glob(f'*{monkey_name.lower()}.mat'))
-        date_matches = [re.match(r'(\d+-\d+-\d+)', str(f.name)) for f in files]
-        return {datetime.date.fromisoformat(d.group(0)): files[i]
-                for i, d in enumerate(date_matches) if d}
-
-    def get_idxs(self, monkey_name: str, date: str):
-        return list(range(len(self._from_cache(monkey_name, date))))
-
-    def get_trial(self, monkey_name: str, date: str, idx: int):
-        return self._raw_to_json(self._from_cache(monkey_name, date)[idx])
-
-
-data_handler = DataHandler('data')
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
 @app.route('/names')
-def get_names():
-    return json.dumps(data_handler.get_names())
+@uses_db
+def get_names(curr):
+    curr.execute('SELECT DISTINCT name FROM trials;')
+    rows = [row[0] for row in curr.fetchall()]
+    print(rows)
+    rows = list(sorted(rows, key=lambda name: 0 if name == 'Zorin' else 1))
+    return jsonify(rows)
+
 
 @app.route('/dates')
-def get_dates():
+@uses_db
+def get_dates(curr):
     name = request.args.get('name')
-    return json.dumps([str(x) for x in data_handler.get_dates(name).keys()])
+    # this is sanitized
+    curr.execute('''SELECT DISTINCT date FROM trials
+                    WHERE LOWER(name) = LOWER(%s)
+                    ORDER BY date;''', (name,))
+    return jsonify([row[0] for row in curr.fetchall()])
+
 
 @app.route('/idxs')
-def get_idxs():
+@uses_db
+def get_idxs(curr):
     name, date = [request.args.get(x) for x in ['name', 'date']]
-    return json.dumps(data_handler.get_idxs(name, date))
+    curr.execute('''SELECT index FROM trials
+                    WHERE LOWER(name) = LOWER(%s) AND date = %s
+                    ORDER BY index;''', (name, date))
+    return jsonify([row[0] for row in curr.fetchall()])
+
 
 @app.route('/trial')
-def get_trial():
+@uses_db
+def get_trial(curr):
     name, date, idx = [request.args.get(x)
                             for x in ['name', 'date', 'idx']]
-    return data_handler.get_trial(name, date, int(idx))
+    curr.execute('''SELECT lfp, spikes, events FROM trials
+                    WHERE LOWER(name) = LOWER(%s) AND date = %s AND index = %s;''',
+                 (name, date, idx))
+    row = curr.fetchone()
+    return jsonify({'lfp': row[0], 'spikes': row[1], 'events': row[2]})
+
 
 if __name__ == '__main__':
     app.env = 'development'
