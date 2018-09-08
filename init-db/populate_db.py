@@ -3,6 +3,7 @@ import json
 import re
 import datetime
 import math
+import subprocess as sp
 
 import psycopg2
 import psycopg2.extras
@@ -86,8 +87,8 @@ def insert_trials(curr, name, date, trial_data):
 
 
 if __name__ == '__main__':
-    data_dir = pathlib.Path('data')
-    with psycopg2.connect(dbname="v4_trials", user='postgres') as conn, conn.cursor() as curr:
+    data_dir = pathlib.Path('/raw')
+    with psycopg2.connect(dbname="postgres", user='postgres', host='db') as conn, conn.cursor() as curr:
         create_db(curr)
         conn.commit()
 

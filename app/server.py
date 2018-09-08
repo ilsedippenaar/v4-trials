@@ -9,7 +9,7 @@ def uses_db(f):
     # for functions that want a cursor
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
-        with psycopg2.connect(dbname='v4_trials', user='postgres') as conn, \
+        with psycopg2.connect(dbname='postgres', user='postgres', host="db") as conn, \
              conn.cursor() as curr:
             return f(curr, *args, **kwargs)
         return None
@@ -26,7 +26,6 @@ def index():
 def get_names(curr):
     curr.execute('SELECT DISTINCT name FROM trials;')
     rows = [row[0] for row in curr.fetchall()]
-    print(rows)
     rows = list(sorted(rows, key=lambda name: 0 if name == 'Zorin' else 1))
     return jsonify(rows)
 
@@ -66,4 +65,4 @@ def get_trial(curr):
 
 if __name__ == '__main__':
     app.env = 'development'
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

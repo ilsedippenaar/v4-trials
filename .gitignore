@@ -1,2 +1,2 @@
-data/*
-!data/.gitkeep
+init-db/raw/*
+!init-db/raw/.gitkeep
