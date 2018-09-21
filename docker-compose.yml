@@ -1,12 +1,23 @@
 version: "3.7"
 
 services:
+    web:
+        build: ./web
+        ports:
+            - "80:80"
+        networks:
+            - frontend
+        depends_on:
+            - app
     app:
         build: ./app
         ports:
-            - "80:5000"
+            - "8080:8080"
         networks:
-            - backend
+            frontend:
+                aliases:
+                    - app-frontend
+            backend:
         depends_on:
             - db
     init-db:
@@ -30,5 +41,6 @@ services:
             - db-data:/var/lib/postgresql/data
 networks:
     backend:
+    frontend:
 volumes:
     db-data:

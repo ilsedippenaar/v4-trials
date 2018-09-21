@@ -3,14 +3,13 @@
     <head>
         <meta charset="utf-8">
         <title>V4 Trial Visualization</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='lib/semantic.min.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-        <script src="{{ url_for('static', filename='lib/d3.v5.min.js') }}" charset="utf-8"></script>
-        <script src="{{ url_for('static', filename='lib/vue.min.js') }}" charset="utf-8"></script>
+        <link rel="stylesheet" href="./lib/semantic.min.css">
+        <script src="./lib/d3.v5.min.js" charset="utf-8"></script>
+        <script src="./lib/vue.min.js" charset="utf-8"></script>
+        <link rel="stylesheet" href="./style.css">
     </head>
     <body>
         <div id="controls" class="ui segment">
-            {% raw %}
             <form id="monkey-name" class="ui form">
                 <div class="inline fields">
                     <div v-for="name in monkeyNames" class="field">
@@ -36,7 +35,6 @@
                 <button type="button" id="prev-btn" @click="onPrev" class="ui red button">Previous</button>
                 <button type="button" id="next-btn" @click="onNext" class="ui green button">Next</button>
             </div>
-            {% endraw %}
         </div>
         <svg id="plot">
             <g>
@@ -48,6 +46,6 @@
                 <g id="axis-bottom"/>
             </g>
         </svg>
-        <script src="{{ url_for('static', filename='app.js') }}" charset="utf-8"></script>
+        <script src="./app.js" charset="utf-8"></script>
     </body>
 </html>

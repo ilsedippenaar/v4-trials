@@ -16,11 +16,6 @@ def uses_db(f):
     return wrapped
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
 @app.route('/names')
 @uses_db
 def get_names(curr):
@@ -64,5 +59,6 @@ def get_trial(curr):
 
 
 if __name__ == '__main__':
-    app.env = 'development'
-    app.run(debug=True, host='0.0.0.0')
+    # app.env = 'development'
+    # app.run(debug=True, host='0.0.0.0')
+    app.run(host='0.0.0.0')
